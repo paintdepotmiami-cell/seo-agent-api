@@ -43,6 +43,13 @@ class SEOEngine:
         # Track existing links across site
         site_links = {}
         
+        # Get CTA patterns to avoid
+        placement = self.config.get('placement', {})
+        cta_patterns = placement.get('cta_patterns', [])
+        
+        # Build target keyword map from knowledge_graph
+        target_keywords = self._build_keyword_map()
+        
         for page in pages_data:
             url = page.get('url', '')
             title = page.get('title', 'Untitled')
@@ -67,37 +74,84 @@ class SEOEngine:
             if page_type == 'excluded':
                 continue
             
-            # Find linking opportunities
-            opportunities = self.opportunity_engine.find_opportunities(
-                source_url=url,
-                source_title=title,
-                content_text=content_text,
-                content_html=content_html,
-                existing_links=existing_links
-            )
+            # Skip money pages from linking TO other money pages
+            if page_type == 'money_page':
+                continue
             
-            for opp in opportunities:
-                opp_dict = opp.to_dict()
-                opp_dict['source_type'] = page_type
-                opp_dict['action'] = 'PENDING'
+            # Find keyword-based opportunities
+            content_lower = content_text.lower()
+            suggestions_for_page = 0
+            max_per_page = self.config.get('limits', {}).get('max_links_per_page', 2)
+            
+            for target_url, keywords in target_keywords.items():
+                # Skip if already linked
+                normalized_target = self.architect.normalize_url(target_url)
+                already_linked = any(
+                    self.architect.normalize_url(link) == normalized_target 
+                    for link in existing_links
+                )
+                if already_linked:
+                    continue
                 
-                # Determine campaign alignment
-                if opp.target_type.value == 'service':
-                    target_url = opp.target_url.lower()
-                    campaigns = self.config.get('active_campaigns', {})
-                    if campaigns.get('primary', '') in target_url:
-                        opp_dict['campaign_alignment'] = campaigns.get('primary')
-                    elif campaigns.get('secondary', '') in target_url:
-                        opp_dict['campaign_alignment'] = campaigns.get('secondary')
-                    else:
-                        opp_dict['campaign_alignment'] = None
-                else:
-                    opp_dict['campaign_alignment'] = None
+                # Don't link to self
+                if self.architect.normalize_url(url) == normalized_target:
+                    continue
                 
-                # Add decision reason
-                opp_dict['decision_reason'] = opp.reasoning
+                # Check if any keyword appears in content
+                for keyword in keywords:
+                    keyword_lower = keyword.lower()
+                    
+                    if keyword_lower in content_lower:
+                        # Check it's not in a CTA
+                        is_cta = any(cta.lower() in keyword_lower or keyword_lower in cta.lower() 
+                                    for cta in cta_patterns)
+                        if is_cta:
+                            continue
+                        
+                        # Find position in original text
+                        pos = content_lower.find(keyword_lower)
+                        context_start = max(0, pos - 50)
+                        context_end = min(len(content_text), pos + len(keyword) + 50)
+                        context = content_text[context_start:context_end]
+                        
+                        # Get target info
+                        target_info = self._get_target_info(target_url)
+                        target_title = target_info.get('title', target_url)
+                        
+                        # Calculate confidence
+                        confidence = 0.70
+                        campaigns = self.config.get('active_campaigns', {})
+                        campaign_match = None
+                        
+                        if campaigns.get('primary', '') in target_url.lower():
+                            confidence += 0.15
+                            campaign_match = campaigns.get('primary')
+                        elif campaigns.get('secondary', '') in target_url.lower():
+                            confidence += 0.10
+                            campaign_match = campaigns.get('secondary')
+                        
+                        suggestion = {
+                            'source_url': url,
+                            'source_title': title,
+                            'target_url': target_url,
+                            'target_type': 'money_page',
+                            'suggested_anchor': keyword,
+                            'paragraph_context': f"...{context}...",
+                            'confidence_score': confidence,
+                            'decision_reason': f"Keyword '{keyword}' found in content",
+                            'campaign_alignment': campaign_match,
+                            'source_type': page_type,
+                            'action': 'PENDING'
+                        }
+                        
+                        all_suggestions.append(suggestion)
+                        suggestions_for_page += 1
+                        
+                        if suggestions_for_page >= max_per_page:
+                            break
                 
-                all_suggestions.append(opp_dict)
+                if suggestions_for_page >= max_per_page:
+                    break
             
             # Detect permit opportunities
             permit_result = self._analyze_permit_opportunity(
@@ -124,6 +178,38 @@ class SEOEngine:
             'architecture': all_architecture,
             'draft_payloads': []
         }
+    
+    def _build_keyword_map(self) -> Dict[str, List[str]]:
+        """Build map of target URLs to their keywords."""
+        kg = self.config.get('knowledge_graph', {})
+        target_map = {}
+        
+        # Service hubs
+        for name, hub in kg.get('service_hubs', {}).items():
+            url = hub.get('url', '')
+            keywords = hub.get('keywords', [])
+            # Also add anchor pool keywords
+            anchor_pool = self.config.get('anchor_pools', {}).get(name, [])
+            all_keywords = keywords + anchor_pool
+            target_map[url] = all_keywords
+        
+        # Materials
+        for material in kg.get('materials', []):
+            url = material.get('url', '')
+            name = material.get('name', '')
+            target_map[url] = [name.lower(), f"{name.lower()} pavers"]
+        
+        return target_map
+    
+    def _get_target_info(self, target_url: str) -> Dict[str, Any]:
+        """Get info about a target URL from knowledge graph."""
+        kg = self.config.get('knowledge_graph', {})
+        
+        for name, hub in kg.get('service_hubs', {}).items():
+            if hub.get('url') == target_url:
+                return hub
+        
+        return {'title': target_url}
     
     def _extract_text(self, html: str) -> str:
         """Extract plain text from HTML."""

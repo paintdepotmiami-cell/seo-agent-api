@@ -21,6 +21,30 @@ placement:
     - cta_blocks
     - image_captions
     - button_text
+  
+  # CTA button patterns to never wrap with links
+  cta_patterns:
+    - "get a quote"
+    - "get quote"
+    - "free quote"
+    - "request quote"
+    - "schedule"
+    - "book now"
+    - "book a"
+    - "contact us"
+    - "call now"
+    - "call us"
+    - "learn more"
+    - "read more"
+    - "click here"
+    - "see more"
+    - "view more"
+    - "start your"
+    - "get started"
+    - "submit"
+    - "send message"
+    - "free estimate"
+    - "get free"
 
 # -----------------------------------------------------
 # UNIVERSAL LINK LIMITS
@@ -39,17 +63,17 @@ anchor_rules:
   no_exact_match_primary_keyword: true
   
   # Fuzzy similarity threshold (0-1)
-  # Block if anchor is >85% similar to title/keyword
-  similarity_threshold: 0.85
+  # Lower = more permissive (was 0.85)
+  similarity_threshold: 0.70
   
   # Don't repeat same anchor within N uses across site
   rotation_memory: 3
   
   # Max characters for anchor text
-  max_anchor_length: 50
+  max_anchor_length: 60
   
-  # Min characters (avoid single words)
-  min_anchor_length: 10
+  # Min characters (was 10, now allow shorter phrases)
+  min_anchor_length: 5
 
 # -----------------------------------------------------
 # PAGE TYPE CLASSIFICATION
@@ -118,9 +142,9 @@ scoring:
     campaign_alignment: 0.20
     
   thresholds:
-    min_score_to_suggest: 0.60
-    high_priority: 0.80
-    low_priority: 0.40
+    min_score_to_suggest: 0.45
+    high_priority: 0.75
+    low_priority: 0.35
 
 # -----------------------------------------------------
 # ARCHITECTURE ANALYSIS
