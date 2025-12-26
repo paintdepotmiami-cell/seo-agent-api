@@ -74,7 +74,26 @@ class SEOEngine:
             if page_type == 'excluded':
                 continue
             
-            # Skip money pages from linking TO other money pages
+            # Detect permit opportunities (for ALL page types except excluded)
+            permit_result = self._analyze_permit_opportunity(
+                url, page_type, content_text, existing_links
+            )
+            if permit_result:
+                all_permits.append(permit_result)
+            
+            # Architecture analysis (for ALL pages)
+            arch_entry = {
+                'url': url,
+                'page_type': page_type,
+                'click_depth': page.get('depth', 2),
+                'inbound_links': self._count_inbound(url, site_links),
+                'outbound_links': len(existing_links),
+                'hub_score': self._calculate_hub_score(page_type, len(existing_links)),
+                'status': self._determine_status(page_type, len(existing_links))
+            }
+            all_architecture.append(arch_entry)
+            
+            # Skip money pages from linking TO other money pages (but permit/arch already done)
             if page_type == 'money_page':
                 continue
             
@@ -152,25 +171,6 @@ class SEOEngine:
                 
                 if suggestions_for_page >= max_per_page:
                     break
-            
-            # Detect permit opportunities
-            permit_result = self._analyze_permit_opportunity(
-                url, page_type, content_text, existing_links
-            )
-            if permit_result:
-                all_permits.append(permit_result)
-            
-            # Architecture analysis
-            arch_entry = {
-                'url': url,
-                'page_type': page_type,
-                'click_depth': page.get('depth', 2),
-                'inbound_links': self._count_inbound(url, site_links),
-                'outbound_links': len(existing_links),
-                'hub_score': self._calculate_hub_score(page_type, len(existing_links)),
-                'status': self._determine_status(page_type, len(existing_links))
-            }
-            all_architecture.append(arch_entry)
         
         return {
             'suggestions': all_suggestions,

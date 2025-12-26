@@ -225,6 +225,171 @@ async def clear_cache():
     return {"cleared": count, "status": "ok"}
 
 
+from pydantic import BaseModel
+from typing import List, Optional
+
+class LinkApproval(BaseModel):
+    source_url: str
+    target_url: str
+    anchor_text: str
+    link_type: str  # 'internal' or 'permit'
+
+class ApplyRequest(BaseModel):
+    project_name: str
+    approved_links: List[LinkApproval]
+
+@app.post("/apply-approved")
+async def apply_approved(request: ApplyRequest):
+    """
+    Apply approved links to WordPress as drafts.
+    
+    Each approved link will be inserted into the source page content.
+    Changes are saved as revisions (drafts), not published directly.
+    """
+    start_time = time.time()
+    
+    try:
+        # Load config
+        cfg = ConfigLoader.load(request.project_name)
+        
+        # Check mode
+        api_mode = cfg.get('api', {}).get('mode', 'read_only')
+        if api_mode != 'apply_draft':
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": "Agent is in read_only mode",
+                    "message": "Change api.mode to 'apply_draft' in config to enable",
+                    "current_mode": api_mode
+                }
+            )
+        
+        # Import wp_client
+        from src.wp_client import WPClient
+        wp = WPClient(cfg)
+        
+        # Test connection
+        if not wp.test_connection():
+            return JSONResponse(
+                status_code=500,
+                content={"error": "WordPress connection failed"}
+            )
+        
+        results = {
+            "total": len(request.approved_links),
+            "success": 0,
+            "failed": 0,
+            "details": []
+        }
+        
+        # Apply each link
+        for link in request.approved_links:
+            try:
+                # Get post ID from URL
+                post_id = get_post_id_from_url(cfg, link.source_url)
+                
+                if not post_id:
+                    results["failed"] += 1
+                    results["details"].append({
+                        "source": link.source_url,
+                        "status": "failed",
+                        "reason": "Could not find post ID"
+                    })
+                    continue
+                
+                # Apply the link
+                success = wp.apply_link(
+                    post_id=post_id,
+                    content_type='posts',  # Could be 'pages' too
+                    anchor_text=link.anchor_text,
+                    target_url=link.target_url,
+                    as_draft=True
+                )
+                
+                if success:
+                    results["success"] += 1
+                    results["details"].append({
+                        "source": link.source_url,
+                        "target": link.target_url,
+                        "anchor": link.anchor_text,
+                        "status": "applied_as_draft"
+                    })
+                else:
+                    results["failed"] += 1
+                    results["details"].append({
+                        "source": link.source_url,
+                        "status": "failed",
+                        "reason": "wp.apply_link returned None"
+                    })
+                    
+            except Exception as e:
+                results["failed"] += 1
+                results["details"].append({
+                    "source": link.source_url,
+                    "status": "error",
+                    "reason": str(e)
+                })
+        
+        results["exec_time_ms"] = (time.time() - start_time) * 1000
+        
+        # Clear cache after applying
+        memory_cache.clear()
+        
+        return results
+    
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Apply failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def get_post_id_from_url(cfg: dict, url: str) -> Optional[int]:
+    """
+    Get WordPress post/page ID from URL.
+    Returns None if not found.
+    """
+    import requests
+    
+    site_url = cfg.get('site', {}).get('url', '').rstrip('/')
+    api = cfg.get('api', {})
+    
+    # Normalize URL
+    if url.startswith('/'):
+        slug = url.strip('/').split('/')[-1]
+    else:
+        slug = url.replace(site_url, '').strip('/').split('/')[-1]
+    
+    # Try to find by slug
+    try:
+        auth = (api.get('username'), api.get('app_password'))
+        
+        # Try posts first
+        resp = requests.get(
+            f"{site_url}/wp-json/wp/v2/posts",
+            params={'slug': slug},
+            auth=auth,
+            timeout=10
+        )
+        if resp.status_code == 200 and resp.json():
+            return resp.json()[0].get('id')
+        
+        # Try pages
+        resp = requests.get(
+            f"{site_url}/wp-json/wp/v2/pages",
+            params={'slug': slug},
+            auth=auth,
+            timeout=10
+        )
+        if resp.status_code == 200 and resp.json():
+            return resp.json()[0].get('id')
+            
+    except Exception as e:
+        logger.error(f"get_post_id_from_url error: {e}")
+    
+    return None
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
