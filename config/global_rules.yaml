@@ -1,0 +1,141 @@
+# ============================================================
+# SEO INTELLIGENCE AGENT - GLOBAL RULES
+# Version: 1.0
+# These rules apply to ALL projects/clients
+# ============================================================
+
+# -----------------------------------------------------
+# UNIVERSAL PLACEMENT RULES
+# -----------------------------------------------------
+placement:
+  forbidden_locations:
+    - h1
+    - h2
+    - h3
+    - h4
+    - first_sentence
+    - first_paragraph
+    - footer
+    - navigation
+    - sidebar
+    - cta_blocks
+    - image_captions
+    - button_text
+
+# -----------------------------------------------------
+# UNIVERSAL LINK LIMITS
+# -----------------------------------------------------
+limits:
+  max_links_per_page: 2
+  max_permit_links_per_page: 1
+  max_hub_links_per_page: 1
+
+# -----------------------------------------------------
+# ANCHOR TEXT RULES
+# -----------------------------------------------------
+anchor_rules:
+  # Block anchors identical to target page H1 or primary keyword
+  no_exact_match_target_title: true
+  no_exact_match_primary_keyword: true
+  
+  # Fuzzy similarity threshold (0-1)
+  # Block if anchor is >85% similar to title/keyword
+  similarity_threshold: 0.85
+  
+  # Don't repeat same anchor within N uses across site
+  rotation_memory: 3
+  
+  # Max characters for anchor text
+  max_anchor_length: 50
+  
+  # Min characters (avoid single words)
+  min_anchor_length: 10
+
+# -----------------------------------------------------
+# PAGE TYPE CLASSIFICATION
+# -----------------------------------------------------
+page_types:
+  - money_page      # Core service pages (driveways, pool decks)
+  - hub             # Central authority pages (permit hub)
+  - permit_page     # Individual city permit pages
+  - material        # Product/material pages
+  - blog            # Blog posts / guides
+  - project         # Portfolio / case studies
+  - utility         # Contact, about, etc.
+  - excluded        # Never touch
+
+# -----------------------------------------------------
+# UNIVERSAL EXCLUSION PATTERNS
+# -----------------------------------------------------
+exclusions:
+  url_patterns:
+    - "*thank*"
+    - "*booking*"
+    - "*calendar*"
+    - "*checkout*"
+    - "*cart*"
+    - "*confirmation*"
+    - "*success*"
+    
+  query_params:
+    - "utm_*"
+    - "gclid*"
+    - "fbclid*"
+    - "ref=*"
+    
+  post_types:
+    - attachment
+    - revision
+    - nav_menu_item
+
+# -----------------------------------------------------
+# URL NORMALIZATION
+# -----------------------------------------------------
+url_normalization:
+  # Always use trailing slash
+  trailing_slash: true
+  
+  # Always lowercase
+  lowercase: true
+  
+  # Remove these query params before comparison
+  strip_params:
+    - utm_source
+    - utm_medium
+    - utm_campaign
+    - gclid
+    - fbclid
+
+# -----------------------------------------------------
+# SCORING WEIGHTS (Opportunity Prioritization)
+# -----------------------------------------------------
+scoring:
+  weights:
+    topical_relevance: 0.30
+    page_authority: 0.20
+    content_age: 0.15      # Older = higher priority
+    existing_link_count: 0.15
+    campaign_alignment: 0.20
+    
+  thresholds:
+    min_score_to_suggest: 0.60
+    high_priority: 0.80
+    low_priority: 0.40
+
+# -----------------------------------------------------
+# ARCHITECTURE ANALYSIS
+# -----------------------------------------------------
+architecture:
+  max_click_depth: 3       # Flag pages deeper than this
+  orphan_threshold: 0      # Pages with 0 inbound links
+  over_linked_threshold: 5 # Flag pages with more than this
+  hub_strength_min: 3      # Min inbound links for healthy hub
+
+# -----------------------------------------------------
+# API DEFAULTS
+# -----------------------------------------------------
+api:
+  default_mode: "read_only"  # Options: read_only, apply_draft
+  rate_limit_per_minute: 30
+  timeout_seconds: 30
+  retry_attempts: 3

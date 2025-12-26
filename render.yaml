@@ -1,0 +1,25 @@
+# Render Blueprint Configuration
+# Infrastructure as Code for automatic deployment
+
+services:
+  - type: web
+    name: seo-agent-api
+    env: python
+    region: ohio
+    plan: starter  # $7/month - upgrade to 'standard' for more RAM
+    
+    # Build
+    buildCommand: pip install -r requirements.txt
+    
+    # Start: 4 workers for concurrency
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT --workers 4 --timeout-keep-alive 75
+    
+    # Environment
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.0"
+      - key: PORT
+        value: "10000"
+    
+    # Auto-deploy on push to main
+    autoDeploy: true

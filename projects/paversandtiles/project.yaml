@@ -1,0 +1,333 @@
+# ============================================================
+# PROJECT: Driveway & Paver Solutions
+# Site: https://paversandtiles.com
+# Version: 1.0
+# Last Updated: 2025-12-26
+# ============================================================
+
+# Inherits from: global_rules.yaml
+
+# -----------------------------------------------------
+# SITE IDENTITY
+# -----------------------------------------------------
+site:
+  name: "Driveway & Paver Solutions"
+  url: "https://paversandtiles.com"
+  legal_name: "Larrauris Constructions LLC"
+  primary_geo: "Miami-Dade County, FL"
+
+# -----------------------------------------------------
+# KNOWLEDGE GRAPH - SITE HIERARCHY
+# -----------------------------------------------------
+knowledge_graph:
+  homepage: "/"
+  
+  # ===== CORE SERVICE HUBS (Money Pages) =====
+  service_hubs:
+    driveways:
+      url: "/driveways-miami/"
+      type: money_page
+      priority: 1
+      title: "Driveway Installation Miami"
+      keywords: 
+        - driveway installation
+        - paver driveway
+        - driveway pavers miami
+      
+    pool_decks:
+      url: "/pool-deck-pavers-miami/"
+      type: money_page
+      priority: 1
+      title: "Pool Deck Pavers Miami"
+      keywords:
+        - pool deck installation
+        - pool pavers
+        - pool deck miami
+      
+    patios:
+      url: "/patio-pavers-miami/"
+      type: money_page
+      priority: 1
+      title: "Patio Pavers Miami"
+      keywords:
+        - patio pavers
+        - backyard patio
+        - patio installation miami
+      
+    turf:
+      url: "/artificial-turf-installation-miami/"
+      type: money_page
+      priority: 1
+      title: "Artificial Turf Installation Miami"
+      keywords:
+        - artificial turf
+        - synthetic grass
+        - turf installation miami
+      
+    installation:
+      url: "/paver-installation-south-florida/"
+      type: money_page
+      priority: 2
+      title: "Paver Installation South Florida"
+      keywords:
+        - paver installation
+        - paver contractor
+        - south florida pavers
+      
+    outdoor_living:
+      url: "/pergolas-outdoor-living-south-florida/"
+      type: money_page
+      priority: 2
+      title: "Pergolas & Outdoor Living"
+      keywords:
+        - pergola installation
+        - outdoor living
+        - outdoor kitchen miami
+
+  # ===== AUTHORITY ASSETS (Trust Pages) =====
+  authority_hubs:
+    permit_hub:
+      url: "/service-areas-map/"
+      type: hub
+      priority: 1
+      is_central_hub: true
+      title: "Service Areas & Permits"
+      keywords:
+        - permits
+        - HOA approval
+        - service areas miami
+      
+    permit_pages:
+      - url: "/city-of-miami-permit/"
+        type: permit_page
+        city: "Miami"
+        geo_terms: [miami, city of miami]
+        
+      - url: "/city-of-miami-beach-pavers-permit/"
+        type: permit_page
+        city: "Miami Beach"
+        geo_terms: [miami beach]
+        
+      - url: "/coral-gables-pavers-permit/"
+        type: permit_page
+        city: "Coral Gables"
+        geo_terms: [coral gables, the gables]
+        
+      - url: "/village-of-pinecrest-permit/"
+        type: permit_page
+        city: "Pinecrest"
+        geo_terms: [pinecrest, village of pinecrest]
+        
+      - url: "/aventura-permit/"
+        type: permit_page
+        city: "Aventura"
+        geo_terms: [aventura]
+        
+      - url: "/sunny-isles-beach-permit/"
+        type: permit_page
+        city: "Sunny Isles Beach"
+        geo_terms: [sunny isles, sunny isles beach]
+        
+      - url: "/key-biscayne-permits/"
+        type: permit_page
+        city: "Key Biscayne"
+        geo_terms: [key biscayne, the key]
+        
+      - url: "/doral-pavers-permit/"
+        type: permit_page
+        city: "Doral"
+        geo_terms: [doral, city of doral]
+        
+      - url: "/village-bal-harbour-permit/"
+        type: permit_page
+        city: "Bal Harbour"
+        geo_terms: [bal harbour, bal harbor]
+
+  # ===== MATERIAL PAGES =====
+  materials:
+    - url: "/travertine-pavers/"
+      type: material
+      name: "Travertine"
+      
+    - url: "/coral-stone/"
+      type: material
+      name: "Coral Stone"
+      
+    - url: "/chicago-brick/"
+      type: material
+      name: "Chicago Brick"
+      
+    - url: "/concrete-pavers/"
+      type: material
+      name: "Concrete Pavers"
+
+  # ===== CONTENT SOURCES =====
+  content_sources:
+    blog:
+      path: "/blog/"
+      type: blog
+    projects:
+      path: "/projects/"
+      type: project
+
+# -----------------------------------------------------
+# ACTIVE CAMPAIGNS
+# -----------------------------------------------------
+active_campaigns:
+  # Options: driveways, pool_decks, patios, turf, outdoor_living
+  primary: "driveways"
+  secondary: "pool_decks"
+  boost_multiplier: 1.5  # Extra scoring weight for campaign-aligned links
+
+# -----------------------------------------------------
+# PERMIT LINKING RULES (Project-Specific)
+# -----------------------------------------------------
+permit_rules:
+  no_permit_to_permit: true
+  hub_priority: true
+  hub_url: "/service-areas-map/"
+  
+  # Only link to city permit if content mentions that city
+  permit_link_requires_geo_context: true
+  
+  # Terms that trigger geo-context detection
+  geo_context_terms:
+    - miami
+    - miami beach
+    - coral gables
+    - pinecrest
+    - aventura
+    - sunny isles
+    - key biscayne
+    - doral
+    - bal harbour
+    - kendall
+    - homestead
+    - south florida
+    - miami-dade
+
+  # Allowed source page types for permit links
+  allowed_sources:
+    - blog
+    - money_page
+    - project
+    
+  # Never link permits from these
+  forbidden_sources:
+    - permit_page
+    - utility
+    - excluded
+
+# -----------------------------------------------------
+# PROJECT-SPECIFIC EXCLUSIONS
+# -----------------------------------------------------
+exclusions:
+  urls:
+    - "/thank-you/"
+    - "/thank-you-quote/"
+    - "/thank-you-visualizer/"
+    - "/privacy-policy/"
+    - "/terms-and-conditions/"
+    - "/contact/"
+    - "/booking/"
+    
+  patterns:
+    - "*-offer"
+    - "*-landing"
+    - "*-ads"
+    - "*-promo"
+    - "*thank*"
+    - "*booking*"
+    - "*calendar*"
+
+# -----------------------------------------------------
+# ANCHOR TEXT POOLS
+# -----------------------------------------------------
+anchor_pools:
+  driveways:
+    - "driveway installation in Miami"
+    - "custom paver driveways"
+    - "residential driveway pavers"
+    - "paver driveway solutions"
+    - "professionally installed driveways"
+    - "Miami driveway contractors"
+    - "durable paver driveways"
+    
+  pool_decks:
+    - "pool deck paver installation"
+    - "pool deck remodeling"
+    - "pavers around swimming pools"
+    - "outdoor pool deck solutions"
+    - "slip-resistant pool decks"
+    - "cool pool deck surfaces"
+    - "pool area paver design"
+    
+  patios:
+    - "backyard patio pavers"
+    - "custom patio installations"
+    - "outdoor patio design"
+    - "patio paver solutions"
+    - "residential patio projects"
+    - "outdoor living patio"
+    - "paver patio contractors"
+    
+  turf:
+    - "artificial turf installation"
+    - "synthetic grass for backyards"
+    - "pet-friendly turf solutions"
+    - "low-maintenance turf options"
+    - "professional turf installation"
+    - "artificial grass Miami"
+    - "drought-resistant lawn alternatives"
+    
+  installation:
+    - "professional paver installation"
+    - "paver contractors in South Florida"
+    - "outdoor paver services"
+    - "residential paver projects"
+    - "full-service paver installation"
+    - "expert paver contractors"
+    
+  outdoor_living:
+    - "outdoor living spaces"
+    - "custom pergola installation"
+    - "backyard pergola design"
+    - "outdoor shade structures"
+    - "pergolas and outdoor kitchens"
+    - "outdoor entertainment areas"
+    
+  permits_general:
+    - "city permit requirements"
+    - "local permit approval process"
+    - "HOA and city approval assistance"
+    - "permit guidance for paver projects"
+    - "navigating city permits and HOA rules"
+    - "permit assistance for homeowners"
+    
+  permits_location_safe:
+    - "permit requirements in this area"
+    - "local permitting guidelines"
+    - "city-specific permit process"
+    - "working with local building departments"
+    - "permit approval support for homeowners"
+    - "local code compliance"
+
+# -----------------------------------------------------
+# SCHEDULE
+# -----------------------------------------------------
+schedule:
+  frequency_days: 14
+  next_run: null  # Set by agent after first run
+
+# -----------------------------------------------------
+# OUTPUT PREFERENCES
+# -----------------------------------------------------
+output:
+  formats:
+    - csv
+    - html
+  directory: "./reports/"
+  reports:
+    - internal_linking
+    - architecture_analysis
+    - action_checklist
