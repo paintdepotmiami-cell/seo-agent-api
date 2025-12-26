@@ -36,17 +36,21 @@ class WPCrawler:
         self.request_count = 0
         self.window_start = time.time()
     
-    def _request(self, endpoint: str, params: Optional[Dict] = None) -> Optional[List]:
-        """Make GET request to WP REST API."""
+    def _request(self, endpoint: str, params: Optional[Dict] = None, retry_count: int = 0) -> Optional[List]:
+        """Make GET request to WP REST API with retry logic."""
         self._check_rate_limit()
         
         url = f"{self.api_base}/{endpoint}"
+        max_retries = 3
         
         # Headers to avoid Cloudflare/WAF blocking
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 SEO-Agent/2.0',
-            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Cache-Control': 'no-cache',
         }
         
         try:
@@ -55,23 +59,54 @@ class WPCrawler:
                 auth=self.auth, 
                 params=params, 
                 headers=headers,
-                timeout=30
+                timeout=60,  # Longer timeout
+                allow_redirects=True
             )
             self.request_count += 1
             
+            # Log response info for debugging
+            content_type = response.headers.get('Content-Type', '')
+            print(f"📡 {endpoint}: {response.status_code} | Type: {content_type[:50]}")
+            
+            # Check if response is HTML (Cloudflare challenge)
+            if 'text/html' in content_type:
+                if retry_count < max_retries:
+                    print(f"⚠️ Got HTML instead of JSON, retrying ({retry_count + 1}/{max_retries})...")
+                    time.sleep(2)  # Wait before retry
+                    return self._request(endpoint, params, retry_count + 1)
+                else:
+                    print(f"❌ Still getting HTML after {max_retries} retries. Cloudflare may be blocking.")
+                    print(f"   Response preview: {response.text[:200]}")
+                    return None
+            
             # Accept 200, 201, 202 as success
             if response.status_code in [200, 201, 202]:
+                if not response.text.strip():
+                    print(f"⚠️ Empty response body")
+                    return []
+                    
                 try:
-                    return response.json()
+                    data = response.json()
+                    if isinstance(data, list):
+                        return data
+                    elif isinstance(data, dict):
+                        # Some WP responses are dicts with data key
+                        return data.get('data', [data])
+                    return []
                 except Exception as e:
-                    print(f"JSON parse error: {e}")
+                    print(f"❌ JSON parse error: {e}")
+                    print(f"   Response: {response.text[:200]}")
                     return None
             else:
-                print(f"API Error: {response.status_code} - {response.text[:200]}")
+                print(f"❌ API Error: {response.status_code} - {response.text[:200]}")
                 return None
                 
         except requests.RequestException as e:
-            print(f"Request failed: {e}")
+            print(f"❌ Request failed: {e}")
+            if retry_count < max_retries:
+                print(f"   Retrying ({retry_count + 1}/{max_retries})...")
+                time.sleep(2)
+                return self._request(endpoint, params, retry_count + 1)
             return None
     
     def _check_rate_limit(self) -> None:
