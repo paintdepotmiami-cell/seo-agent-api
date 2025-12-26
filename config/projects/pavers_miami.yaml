@@ -16,6 +16,12 @@ site:
   legal_name: "Larrauris Constructions LLC"
   primary_geo: "Miami-Dade County, FL"
 
+# WordPress API Credentials
+api:
+  username: "gra8g1"
+  app_password: "su6J Ehkv yhH8 Di9S zJPP azPw"
+  mode: "read_only"
+
 # -----------------------------------------------------
 # KNOWLEDGE GRAPH - SITE HIERARCHY
 # -----------------------------------------------------
