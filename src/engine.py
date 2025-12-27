@@ -6,9 +6,9 @@ Orchestrates site analysis and opportunity detection.
 from typing import Dict, Any, List
 import re
 
-from site_architect import SiteArchitect
-from anchor_validator import AnchorValidator, AnchorRotator
-from opportunity_engine import OpportunityEngine
+from .site_architect import SiteArchitect
+from .anchor_validator import AnchorValidator, AnchorRotator
+from .opportunity_engine import OpportunityEngine
 
 
 class SEOEngine:

@@ -20,7 +20,7 @@ site:
 api:
   username: "gra8g1"
   app_password: "su6J Ehkv yhH8 Di9S zJPP azPw"
-  mode: "read_only"
+  mode: "apply_draft"
 
 # -----------------------------------------------------
 # KNOWLEDGE GRAPH - SITE HIERARCHY
